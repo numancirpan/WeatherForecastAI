@@ -12,8 +12,13 @@ class WeatherService {
       return WeatherData.sampleKocaeli();
     }
 
-    final uri = Uri.parse(
-      '${AppSettings.weatherApiBaseUrl}/weather?q=$cityName&appid=${AppSettings.weatherApiKey}&units=metric&lang=tr',
+    final uri = Uri.parse('${AppSettings.weatherApiBaseUrl}/weather').replace(
+      queryParameters: {
+        'q': cityName,
+        'appid': AppSettings.weatherApiKey,
+        'units': 'metric',
+        'lang': 'tr',
+      },
     );
 
     final response = await http.get(uri);
@@ -22,7 +27,8 @@ class WeatherService {
       throw Exception('API error: ${response.statusCode}');
     }
 
-    final Map<String, dynamic> json = jsonDecode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> json =
+        jsonDecode(response.body) as Map<String, dynamic>;
     return WeatherData.fromOpenWeatherJson(json);
   }
 }

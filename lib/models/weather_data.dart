@@ -2,7 +2,10 @@ class WeatherData {
   final String cityName;
   final String dateText;
   final String conditionText;
+  final String conditionCode;
   final String temperatureRange;
+  final int minTemperature;
+  final int maxTemperature;
   final String humidity;
   final String windSpeed;
   final String feelsLike;
@@ -12,7 +15,10 @@ class WeatherData {
     required this.cityName,
     required this.dateText,
     required this.conditionText,
+    required this.conditionCode,
     required this.temperatureRange,
+    required this.minTemperature,
+    required this.maxTemperature,
     required this.humidity,
     required this.windSpeed,
     required this.feelsLike,
@@ -24,7 +30,10 @@ class WeatherData {
       cityName: 'Kocaeli',
       dateText: '16 Mayıs 2026, Cumartesi',
       conditionText: 'Parçalı Bulutlu',
+      conditionCode: 'Clouds',
       temperatureRange: '15° - 24°',
+      minTemperature: 15,
+      maxTemperature: 24,
       humidity: '%62',
       windSpeed: '12 km/h',
       feelsLike: '21°',
@@ -48,8 +57,13 @@ class WeatherData {
     return WeatherData(
       cityName: json['name'] as String? ?? 'Bilinmeyen Şehir',
       dateText: _formatTurkishDate(DateTime.now()),
-      conditionText: _capitalize(weather['description'] as String? ?? 'Bilinmiyor'),
+      conditionText: _capitalize(
+        weather['description'] as String? ?? 'Bilinmiyor',
+      ),
+      conditionCode: weather['main'] as String? ?? 'Unknown',
       temperatureRange: '$tempMin° - $tempMax°',
+      minTemperature: tempMin,
+      maxTemperature: tempMax,
       humidity: '%${humidityValue.round()}',
       windSpeed: '${windSpeedValue.round()} km/h',
       feelsLike: '$feelsLikeValue°',

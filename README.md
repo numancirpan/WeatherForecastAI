@@ -1,12 +1,27 @@
 # WeatherForecastAI
 
-WeatherForecastAI is a mobile weather application project planned for both Android and iOS. The main idea is to combine real-time weather data with AI-generated city-specific visual backgrounds.
+WeatherForecastAI is a Flutter mobile weather application project for Android and iOS. The main idea is to combine real-time weather data with reusable AI-generated city weather illustrations.
 
 ## Project Goal
 
-The application will show weather information in a modern mobile interface and use AI-generated 9:16 isometric city illustrations as premium weather backgrounds.
+The app shows current weather information in a modern mobile interface. For city visuals, the preferred production flow is:
 
-Instead of storing hundreds of city images inside the mobile app, the long-term plan is to generate images with AI, save them in cloud storage, and reuse them with a cache strategy.
+1. User selects a city.
+2. Weather data is fetched from OpenWeather.
+3. The app asks the image backend whether a city + condition + time period image already exists.
+4. If it exists, the stored image URL is returned.
+5. If it does not exist, the backend generates the image with AI, saves it to storage, and returns the URL.
+6. Future users reuse the same image instead of generating it again.
+
+## Current App Features
+
+- Flutter single-codebase app structure
+- OpenWeather city search integration
+- Sample Kocaeli weather fallback when no API key is provided
+- Free first-version image flow with local static PNG assets
+- AI image backend hook through `IMAGE_API_BASE_URL`
+- Built-in fallback hero illustration when the backend image is unavailable
+- Weather details: humidity, wind, feels-like temperature, and pressure
 
 ## Planned Technology Stack
 
@@ -18,69 +33,59 @@ Instead of storing hundreds of city images inside the mobile app, the long-term 
 
 ### Weather Data
 
-- OpenWeather API or another weather API provider
+- OpenWeather API
 
 ### AI Image System
 
 - Dynamic prompt generation
-- AI image generation service
 - Image cache by city + weather condition + time period
+- Backend-side AI image generation
+- Storage URL reuse after the first generation
 
-### Backend / Storage, Later Stage
+### Backend / Storage
 
 - ASP.NET Core Web API or Firebase Cloud Functions
 - Firebase Storage, Cloudinary, or Supabase Storage
-- Database for generated image URLs
+- Database table or document collection for generated image URLs
 
-## Development Phases
+## Expected Image Backend Contract
 
-### Phase 1: Mobile UI Prototype
+The first version does not require this backend. The app first checks local files under `assets/images/`, for example:
 
-- Create Flutter project structure
-- Build a static home screen
-- Show sample city weather data
-- Use a placeholder weather illustration
-- Prepare reusable widgets
+```text
+assets/images/kocaeli_clouds.png
+```
 
-### Phase 2: Weather API Integration
+See `docs/STATIC_IMAGE_ASSETS.md` for the full free asset naming plan.
 
-- Connect to weather API
-- Search weather by city name
-- Display current temperature, min/max temperature, condition, humidity, and wind speed
+When a future backend is added, this is the expected contract.
 
-### Phase 3: AI Image Prompt System
+Mobile request:
 
-- Generate prompt dynamically by city and weather condition
-- Keep AI-generated image free from text
-- Overlay real weather data inside Flutter UI
+```text
+GET /weather-images?city=Kocaeli&condition=Clouds&period=day&minTemp=15&maxTemp=24
+```
 
-### Phase 4: AI Image Cache Backend
+Expected JSON response:
 
-- Check if generated image already exists
-- Generate only if missing
-- Save image URL to database
-- Reuse image for the same city + condition
-
-### Phase 5: Final App Improvements
-
-- City search
-- Favorite cities
-- 5-day forecast
-- UI animations
-- Android APK build
-- iOS preparation
+```json
+{
+  "imageUrl": "https://storage.example.com/weather/kocaeli-clouds-day.png",
+  "cacheKey": "kocaeli-clouds-day",
+  "prompt": "Create a vertical 9:16 mobile weather app hero illustration...",
+  "generatedNow": false
+}
+```
 
 ## Important Design Decision
 
-AI images should not contain city name, date, temperature, or weather text. Text rendering should be handled by Flutter to avoid incorrect AI-generated typography.
+AI images should not contain city name, date, temperature, or weather text. Text rendering is handled by Flutter to avoid incorrect AI-generated typography.
 
 Recommended image prompt rule:
 
 > Do not include any text, numbers, labels, logos, or UI typography in the image. Leave clean empty space at the top for app UI overlay.
 
-## First Milestone
-
-The first working version will be a simple Flutter screen with static sample data:
+## First Milestone Sample Data
 
 - City: Kocaeli
 - Date: 16 Mayıs 2026, Cumartesi
@@ -88,4 +93,3 @@ The first working version will be a simple Flutter screen with static sample dat
 - Temperature range: 15° - 24°
 - Humidity: 62%
 - Wind: 12 km/h
-
