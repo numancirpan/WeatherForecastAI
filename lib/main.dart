@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'models/weather_data.dart';
+
 void main() {
   runApp(const WeatherForecastAIApp());
 }
@@ -13,13 +15,15 @@ class WeatherForecastAIApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'WeatherForecastAI',
       theme: ThemeData(useMaterial3: true),
-      home: const HomeScreen(),
+      home: HomeScreen(weather: WeatherData.sampleKocaeli()),
     );
   }
 }
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final WeatherData weather;
+
+  const HomeScreen({super.key, required this.weather});
 
   @override
   Widget build(BuildContext context) {
@@ -34,51 +38,51 @@ class HomeScreen extends StatelessWidget {
             colors: [Color(0xFF7EC8E3), Color(0xFFEAF8FF)],
           ),
         ),
-        child: const SafeArea(
+        child: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
-                  'Kocaeli',
-                  style: TextStyle(
+                  weather.cityName,
+                  style: const TextStyle(
                     fontSize: 44,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 12),
-                WeatherIconBox(),
-                SizedBox(height: 16),
+                const SizedBox(height: 12),
+                const WeatherIconBox(),
+                const SizedBox(height: 16),
                 Text(
-                  '16 Mayıs 2026, Cumartesi',
-                  style: TextStyle(
+                  weather.dateText,
+                  style: const TextStyle(
                     fontSize: 14,
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Text(
-                  '15° - 24°',
-                  style: TextStyle(
+                  weather.temperatureRange,
+                  style: const TextStyle(
                     fontSize: 54,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Parçalı Bulutlu',
-                  style: TextStyle(
+                  weather.conditionText,
+                  style: const TextStyle(
                     fontSize: 22,
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                SizedBox(height: 36),
-                TodayDetailsCard(),
+                const SizedBox(height: 36),
+                TodayDetailsCard(weather: weather),
               ],
             ),
           ),
@@ -112,7 +116,9 @@ class WeatherIconBox extends StatelessWidget {
 }
 
 class TodayDetailsCard extends StatelessWidget {
-  const TodayDetailsCard({super.key});
+  final WeatherData weather;
+
+  const TodayDetailsCard({super.key, required this.weather});
 
   @override
   Widget build(BuildContext context) {
@@ -128,12 +134,12 @@ class TodayDetailsCard extends StatelessWidget {
           ),
         ],
       ),
-      child: const Padding(
-        padding: EdgeInsets.all(22),
+      child: Padding(
+        padding: const EdgeInsets.all(22),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Bugünün Detayları',
               style: TextStyle(
                 fontSize: 22,
@@ -141,20 +147,20 @@ class TodayDetailsCard extends StatelessWidget {
                 color: Color(0xFF1E3A5F),
               ),
             ),
-            SizedBox(height: 18),
+            const SizedBox(height: 18),
             Row(
               children: [
-                Expanded(child: WeatherDetailCard(icon: Icons.water_drop_rounded, title: 'Nem', value: '%62')),
-                SizedBox(width: 14),
-                Expanded(child: WeatherDetailCard(icon: Icons.air_rounded, title: 'Rüzgar', value: '12 km/h')),
+                Expanded(child: WeatherDetailCard(icon: Icons.water_drop_rounded, title: 'Nem', value: weather.humidity)),
+                const SizedBox(width: 14),
+                Expanded(child: WeatherDetailCard(icon: Icons.air_rounded, title: 'Rüzgar', value: weather.windSpeed)),
               ],
             ),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             Row(
               children: [
-                Expanded(child: WeatherDetailCard(icon: Icons.thermostat_rounded, title: 'Hissedilen', value: '21°')),
-                SizedBox(width: 14),
-                Expanded(child: WeatherDetailCard(icon: Icons.compress_rounded, title: 'Basınç', value: '1014 hPa')),
+                Expanded(child: WeatherDetailCard(icon: Icons.thermostat_rounded, title: 'Hissedilen', value: weather.feelsLike)),
+                const SizedBox(width: 14),
+                Expanded(child: WeatherDetailCard(icon: Icons.compress_rounded, title: 'Basınç', value: weather.pressure)),
               ],
             ),
           ],
