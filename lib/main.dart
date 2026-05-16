@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'models/weather_data.dart';
+import 'services/weather_service.dart';
 
 void main() {
   runApp(const WeatherForecastAIApp());
@@ -15,15 +16,86 @@ class WeatherForecastAIApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'WeatherForecastAI',
       theme: ThemeData(useMaterial3: true),
-      home: HomeScreen(weather: WeatherData.sampleKocaeli()),
+      home: const HomeScreen(),
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final WeatherService _weatherService = WeatherService();
+  late Future<WeatherData> _weatherFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _weatherFuture = _weatherService.getWeatherByCity('Kocaeli');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<WeatherData>(
+      future: _weatherFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const LoadingScreen();
+        }
+
+        if (snapshot.hasError) {
+          return ErrorScreen(message: snapshot.error.toString());
+        }
+
+        final weather = snapshot.data ?? WeatherData.sampleKocaeli();
+        return WeatherHomeContent(weather: weather);
+      },
+    );
+  }
+}
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+}
+
+class ErrorScreen extends StatelessWidget {
+  final String message;
+
+  const ErrorScreen({super.key, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'Hava durumu bilgisi alınamadı.\n$message',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class WeatherHomeContent extends StatelessWidget {
   final WeatherData weather;
 
-  const HomeScreen({super.key, required this.weather});
+  const WeatherHomeContent({super.key, required this.weather});
 
   @override
   Widget build(BuildContext context) {
