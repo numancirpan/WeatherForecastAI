@@ -30,6 +30,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final WeatherService _weatherService = WeatherService();
+  final TextEditingController _cityController = TextEditingController(text: 'Kocaeli');
   late Future<WeatherData> _weatherFuture;
 
   @override
@@ -39,63 +40,66 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void dispose() {
+    _cityController.dispose();
+    super.dispose();
+  }
+
+  void _searchCity() {
+    final cityName = _cityController.text.trim();
+
+    if (cityName.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _weatherFuture = _weatherService.getWeatherByCity(cityName);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<WeatherData>(
       future: _weatherFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const LoadingScreen();
+          return WeatherShell(
+            cityController: _cityController,
+            onSearch: _searchCity,
+            child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+          );
         }
 
         if (snapshot.hasError) {
-          return ErrorScreen(message: snapshot.error.toString());
+          return WeatherShell(
+            cityController: _cityController,
+            onSearch: _searchCity,
+            child: ErrorMessage(message: snapshot.error.toString()),
+          );
         }
 
         final weather = snapshot.data ?? WeatherData.sampleKocaeli();
-        return WeatherHomeContent(weather: weather);
+        return WeatherShell(
+          cityController: _cityController,
+          onSearch: _searchCity,
+          child: WeatherHomeContent(weather: weather),
+        );
       },
     );
   }
 }
 
-class LoadingScreen extends StatelessWidget {
-  const LoadingScreen({super.key});
+class WeatherShell extends StatelessWidget {
+  final TextEditingController cityController;
+  final VoidCallback onSearch;
+  final Widget child;
 
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
-}
-
-class ErrorScreen extends StatelessWidget {
-  final String message;
-
-  const ErrorScreen({super.key, required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'Hava durumu bilgisi alınamadı.\n$message',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class WeatherHomeContent extends StatelessWidget {
-  final WeatherData weather;
-
-  const WeatherHomeContent({super.key, required this.weather});
+  const WeatherShell({
+    super.key,
+    required this.cityController,
+    required this.onSearch,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -115,51 +119,116 @@ class WeatherHomeContent extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                const SizedBox(height: 16),
-                Text(
-                  weather.cityName,
-                  style: const TextStyle(
-                    fontSize: 44,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const WeatherIconBox(),
-                const SizedBox(height: 16),
-                Text(
-                  weather.dateText,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  weather.temperatureRange,
-                  style: const TextStyle(
-                    fontSize: 54,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  weather.conditionText,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 36),
-                TodayDetailsCard(weather: weather),
+                CitySearchBar(controller: cityController, onSearch: onSearch),
+                const SizedBox(height: 20),
+                child,
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class CitySearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final VoidCallback onSearch;
+
+  const CitySearchBar({super.key, required this.controller, required this.onSearch});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: controller,
+            textInputAction: TextInputAction.search,
+            onSubmitted: (_) => onSearch(),
+            decoration: InputDecoration(
+              hintText: 'Şehir ara',
+              filled: true,
+              fillColor: Colors.white,
+              prefixIcon: const Icon(Icons.location_city_rounded),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(22),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        IconButton.filled(
+          onPressed: onSearch,
+          icon: const Icon(Icons.search_rounded),
+        ),
+      ],
+    );
+  }
+}
+
+class ErrorMessage extends StatelessWidget {
+  final String message;
+
+  const ErrorMessage({super.key, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Text(
+        'Hava durumu bilgisi alınamadı.\n$message',
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Color(0xFF1E3A5F)),
+      ),
+    );
+  }
+}
+
+class WeatherHomeContent extends StatelessWidget {
+  final WeatherData weather;
+
+  const WeatherHomeContent({super.key, required this.weather});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          weather.cityName,
+          style: const TextStyle(
+            fontSize: 44,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 12),
+        const WeatherIconBox(),
+        const SizedBox(height: 16),
+        Text(
+          weather.dateText,
+          style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          weather.temperatureRange,
+          style: const TextStyle(fontSize: 54, fontWeight: FontWeight.w800, color: Colors.white),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          weather.conditionText,
+          style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 36),
+        TodayDetailsCard(weather: weather),
+      ],
     );
   }
 }
@@ -170,18 +239,11 @@ class WeatherIconBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white24,
-        borderRadius: BorderRadius.circular(40),
-      ),
+      decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(40)),
       child: const SizedBox(
         width: 130,
         height: 130,
-        child: Icon(
-          Icons.wb_cloudy_rounded,
-          size: 82,
-          color: Colors.white,
-        ),
+        child: Icon(Icons.wb_cloudy_rounded, size: 82, color: Colors.white),
       ),
     );
   }
@@ -198,13 +260,7 @@ class TodayDetailsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 24,
-            offset: Offset(0, 12),
-          ),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 24, offset: Offset(0, 12))],
       ),
       child: Padding(
         padding: const EdgeInsets.all(22),
@@ -213,11 +269,7 @@ class TodayDetailsCard extends StatelessWidget {
           children: [
             const Text(
               'Bugünün Detayları',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1E3A5F),
-              ),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1E3A5F)),
             ),
             const SizedBox(height: 18),
             Row(
@@ -247,20 +299,12 @@ class WeatherDetailCard extends StatelessWidget {
   final String title;
   final String value;
 
-  const WeatherDetailCard({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.value,
-  });
+  const WeatherDetailCard({super.key, required this.icon, required this.title, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4FAFF),
-        borderRadius: BorderRadius.circular(22),
-      ),
+      decoration: BoxDecoration(color: const Color(0xFFF4FAFF), borderRadius: BorderRadius.circular(22)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -270,20 +314,12 @@ class WeatherDetailCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF6B7A90),
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7A90), fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             Text(
               value,
-              style: const TextStyle(
-                fontSize: 20,
-                color: Color(0xFF1E3A5F),
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 20, color: Color(0xFF1E3A5F), fontWeight: FontWeight.w800),
             ),
           ],
         ),
