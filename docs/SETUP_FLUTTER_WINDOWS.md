@@ -31,13 +31,13 @@ git clone https://github.com/numancirpan/WeatherForecastAI.git
 cd WeatherForecastAI
 ```
 
-Then create Flutter platform files in the current folder:
+The GitHub repository name is `WeatherForecastAI`, but Dart package names must use lowercase letters and underscores. Therefore, create the Flutter project with a valid Dart package name:
 
 ```bash
-flutter create .
+flutter create --project-name weather_forecast_ai .
 ```
 
-This command creates the required Android, iOS, Windows, and Flutter project files.
+This command creates the required Android, iOS, Windows, and Flutter project files in the current repository folder.
 
 ## 4. Run the App
 
